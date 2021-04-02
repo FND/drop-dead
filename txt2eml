@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+
+"""
+    $ ./txt2eml sender recipient date [subject]
+
+sender and recipient are e-mail identifiers (e.g. "Jane Doe <jd@example.org>"),
+dates are of the form "Sat, 01 Jan 1970 00:00:00 +0000"
+"""
+
+import sys
+
+from email.charset import Charset, QP
+from email.mime.text import MIMEText
+
+
+args = sys.argv[1:]
+try:
+    sender, recipient, date = args
+    subject = "[via Drop Dead]"
+except ValueError:
+    sender, recipient, date, subject = args
+
+charset = Charset("utf-8")
+charset.body_encoding = QP
+
+msg = MIMEText(sys.stdin.read(), "plain", _charset=charset)
+print("""From: %s
+To: %s
+Subject: %s
+Date: %s""" % (sender, recipient, subject, date))
+print(msg.as_string())
