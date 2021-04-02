@@ -6,6 +6,7 @@ from os import path
 from uuid import uuid4
 
 import re
+import os
 import sys
 
 
@@ -112,6 +113,11 @@ def render(status_line, params, environ, start_response):
     ]
 
 
+def redirect(url, start_response):
+    start_response("302 Found", [("Location", url)]) # XXX: 303?
+    return []
+
+
 def save_message(msg_id, environ, start_response):
     try:
         author, msg = parse_message(environ)
@@ -120,9 +126,12 @@ def save_message(msg_id, environ, start_response):
             "prompt": "Invalid request."
         }, environ, start_response)
 
-    msg_id = store_message(author, msg, msg_id)
-    start_response("302 Found", [("Location", "/%s" % msg_id)]) # XXX: 303?
-    return []
+    if msg_id is None or len(msg.strip()) or (author and len(author.strip()):
+        msg_id = store_message(author, msg, msg_id)
+        return redirect("/%s" % msg_id, start_response)
+
+    delete_message(msg_id)
+    return redirect("/drop-dead/", start_response)
 
 
 def parse_message(environ):
@@ -156,6 +165,11 @@ def store_message(author, msg, msg_id=None):
     except FileExistsError: # just to be safe; should never occur with UUIDs
         create_message(author, msg)
     return msg_id
+
+
+def delete_message(msg_id):
+    msg_path = path.join(STORE_DIR, msg_id)
+    os.remove(msg_path)
 
 
 def retrieve_message(msg_id):
